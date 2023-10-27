@@ -30,14 +30,21 @@ class _GroceryListState extends State<GroceryList> {
   void _loadItems() async {
     final url = Uri.https(
         'flutter-prep-6a589-default-rtdb.firebaseio.com', 'shopping-list.json');
-    final response = await http.get(url);
-    print(response.body);
+  
+  try{
+  final response = await http.get(url);
 
     if (response.statusCode >= 400) {
       setState(() {
         errorMessage =
             "The program ran into an error fetching data rom the server.";
       });
+    }
+    if (response.body == "null") {
+      setState(() {
+        isLoading = false;
+      });
+      return;
     }
     final Map<String, dynamic> listData = json.decode(response.body);
     final List<GroceryItem> _loadedItems = [];
@@ -62,6 +69,13 @@ class _GroceryListState extends State<GroceryList> {
       _groceryItems = _loadedItems;
       isLoading = false;
     });
+  }catch(error){
+     setState(() {
+        errorMessage =
+            "The program ran into an error fetching data rom the server.";
+      });
+  }
+  
   }
 
   void _addItem() async {
@@ -79,28 +93,20 @@ class _GroceryListState extends State<GroceryList> {
     });
   }
 
-  void _removeItem(GroceryItem item) {
-    final url = Uri.https(
-        'flutter-prep-6a589-default-rtdb.firebaseio.com', 'shopping-list/${item.id}.json)');
-    http.delete(url);
- setState(() {
+  void _removeItem(GroceryItem item) async {
+    setState(() {
       _groceryItems.remove(item);
     });
-    // final itemIndex = _groceryItems.indexOf(item);
-    // ScaffoldMessenger.of(context).clearSnackBars;
-    // ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-    //   elevation: 3,
-    //   content: Text("Item remove"),
-    //   action: SnackBarAction(
-    //     label: "Undo",
-    //     onPressed: () {
-    //       _groceryItems.insert(itemIndex, item);
-    //     },
-    //   ),
-    // ));
-    // setState(() {
-    //   _groceryItems.remove(item);
-    // });
+    ScaffoldMessenger.of(context).clearSnackBars;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      elevation: 3,
+      content:  Text("Item removed"),
+    ));
+    final url = Uri.https('flutter-prep-6a589-default-rtdb.firebaseio.com',
+        'shopping-list/${item.id}.json');
+    await http.delete(url);
+
+
   }
 
   @override
